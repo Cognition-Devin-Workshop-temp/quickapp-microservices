@@ -13,6 +13,7 @@ services:
       - order-service
       - product-service
       - notification-service
+      - analytics-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
@@ -80,6 +81,20 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=notificationdb;Username=postgres;Password=postgres
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: Services/Analytics/Analytics.API/Dockerfile
+    ports:
+      - "5006:5006"
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=analyticsdb;Username=postgres;Password=postgres
+      - RabbitMQ__Host=rabbitmq
 
   postgres:
     image: postgres:16-alpine

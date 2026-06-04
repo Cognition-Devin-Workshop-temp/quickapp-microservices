@@ -24,11 +24,11 @@ The monolith's bounded contexts are decomposed into the following independently 
               │  Gateway   │
               └─────┬──────┘
                     │
-┌──────────────┐  ┌┴─────────────┐
-│  Product     │  │ Notification │
-│  Service     │  │  Service     │
-│  (.NET 10)   │  │  (.NET 10)   │
-└──────────────┘  └──────────────┘
+┌──────────────┐  ┌┴─────────────┐  ┌──────────────┐
+│  Product     │  │ Notification │  │  Analytics   │
+│  Service     │  │  Service     │  │  Service     │
+│  (.NET 10)   │  │  (.NET 10)   │  │  (.NET 10)   │
+└──────────────┘  └──────────────┘  └──────────────┘
 ```
 
 ## Services
@@ -40,6 +40,7 @@ The monolith's bounded contexts are decomposed into the following independently 
 | `order-service` | 5003 | Order management and processing | `OrdersController`, order models |
 | `product-service` | 5004 | Product catalog management | `ProductsController`, product models |
 | `notification-service` | 5005 | Email and in-app notifications | `NotificationService`, notification models |
+| `analytics-service` | 5006 | Order analytics, bar graph data (orders per year per customer) | New — cross-service analytics |
 | `api-gateway` | 5000 | YARP reverse proxy, request routing, rate limiting | New — replaces monolith's single entry point |
 
 ## Project Structure
@@ -68,10 +69,14 @@ src/
 │   │   ├── Product.API/
 │   │   ├── Product.Domain/
 │   │   └── Product.Infrastructure/
-│   └── Notification/
-│       ├── Notification.API/
-│       ├── Notification.Domain/
-│       └── Notification.Infrastructure/
+│   ├── Notification/
+│   │   ├── Notification.API/
+│   │   ├── Notification.Domain/
+│   │   └── Notification.Infrastructure/
+│   └── Analytics/
+│       ├── Analytics.API/
+│       ├── Analytics.Domain/
+│       └── Analytics.Infrastructure/
 ├── Shared/
 │   ├── Shared.Contracts/          # Shared DTOs, events, interfaces
 │   └── Shared.Infrastructure/     # Common middleware, logging, health checks
