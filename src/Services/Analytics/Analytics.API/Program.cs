@@ -19,9 +19,9 @@ builder.Services.AddHostedService<OrderPlacedEventConsumer>();
 
 var app = builder.Build();
 
-// Auto-migrate on startup (dev only)
-using (var scope = app.Services.CreateScope())
+if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AnalyticsDbContext>();
     db.Database.Migrate();
 }

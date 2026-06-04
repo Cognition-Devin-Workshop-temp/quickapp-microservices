@@ -17,6 +17,11 @@ public class OrderAnalyticsRepository : IOrderAnalyticsRepository
 
     public async Task AddAsync(OrderAnalyticsEntry entry)
     {
+        bool exists = await _context.OrderAnalyticsEntries
+            .AnyAsync(e => e.OrderId == entry.OrderId);
+        if (exists)
+            return;
+
         _context.OrderAnalyticsEntries.Add(entry);
         await _context.SaveChangesAsync();
     }

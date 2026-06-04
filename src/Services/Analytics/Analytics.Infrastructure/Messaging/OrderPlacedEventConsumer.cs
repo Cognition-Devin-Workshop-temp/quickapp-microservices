@@ -20,6 +20,8 @@ public class OrderPlacedEventConsumer : BackgroundService
     private readonly string _userName;
     private readonly string _password;
 
+    private const int MaxRetryCount = 5;
+
     private IConnection? _connection;
     private IChannel? _channel;
 
@@ -98,7 +100,23 @@ public class OrderPlacedEventConsumer : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing OrderPlacedEvent");
-                await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, cancellationToken: stoppingToken);
+
+                bool requeue = ea.Redelivered is false ||
+                               (ea.BasicProperties?.Headers is not null &&
+                                ea.BasicProperties.Headers.TryGetValue("x-delivery-count", out var countObj) &&
+                                countObj is long count && count < MaxRetryCount);
+
+                try
+                {
+                    await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: requeue, cancellationToken: stoppingToken);
+                }
+                catch (Exception nackEx)
+                {
+                    _logger.LogWarning(nackEx, "Failed to NACK message; broker will redeliver after channel recovery");
+                }
+
+                if (!requeue)
+                    _logger.LogWarning("Message for delivery tag {DeliveryTag} rejected permanently after repeated failures", ea.DeliveryTag);
             }
         };
 
