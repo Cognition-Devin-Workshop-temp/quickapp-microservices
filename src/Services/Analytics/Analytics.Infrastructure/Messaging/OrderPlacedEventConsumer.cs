@@ -135,11 +135,11 @@ public class OrderPlacedEventConsumer : BackgroundService
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
+        await base.StopAsync(cancellationToken);
+
         if (_channel is not null)
             await _channel.CloseAsync(cancellationToken);
         if (_connection is not null)
             await _connection.CloseAsync(cancellationToken);
-
-        await base.StopAsync(cancellationToken);
     }
 }
