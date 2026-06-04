@@ -67,21 +67,33 @@ public class OrderPlacedEventConsumer : BackgroundService
                     using var scope = _scopeFactory.CreateScope();
                     var repository = scope.ServiceProvider.GetRequiredService<IOrderAnalyticsRepository>();
 
-                    var entry = new OrderAnalyticsEntry
+                    if (await repository.ExistsByOrderIdAsync(orderEvent.OrderId))
                     {
-                        Id = Guid.NewGuid(),
-                        OrderId = orderEvent.OrderId,
-                        CustomerId = orderEvent.CustomerId,
-                        TotalAmount = orderEvent.TotalAmount,
-                        Year = orderEvent.PlacedAt.Year,
-                        PlacedAt = orderEvent.PlacedAt
-                    };
+                        _logger.LogInformation("Duplicate OrderPlacedEvent for Order {OrderId}, skipping", orderEvent.OrderId);
+                    }
+                    else
+                    {
+                        var entry = new OrderAnalyticsEntry
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = orderEvent.OrderId,
+                            CustomerId = orderEvent.CustomerId,
+                            TotalAmount = orderEvent.TotalAmount,
+                            Year = orderEvent.PlacedAt.Year,
+                            PlacedAt = orderEvent.PlacedAt
+                        };
 
-                    await repository.AddAsync(entry);
-                    _logger.LogInformation("Processed OrderPlacedEvent for Order {OrderId}", orderEvent.OrderId);
+                        await repository.AddAsync(entry);
+                        _logger.LogInformation("Processed OrderPlacedEvent for Order {OrderId}", orderEvent.OrderId);
+                    }
                 }
 
                 await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false, stoppingToken);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Permanently failed to deserialize OrderPlacedEvent — sending to dead letter");
+                await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, cancellationToken: stoppingToken);
             }
             catch (Exception ex)
             {

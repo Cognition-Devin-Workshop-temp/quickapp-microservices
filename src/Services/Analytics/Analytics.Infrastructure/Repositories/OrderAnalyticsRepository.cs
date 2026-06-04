@@ -21,6 +21,11 @@ public class OrderAnalyticsRepository : IOrderAnalyticsRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task<bool> ExistsByOrderIdAsync(Guid orderId)
+    {
+        return await _context.OrderAnalyticsEntries.AnyAsync(e => e.OrderId == orderId);
+    }
+
     public async Task<List<OrdersPerYearDto>> GetOrdersPerYearByCustomerAsync(Guid customerId)
     {
         return await _context.OrderAnalyticsEntries

@@ -14,6 +14,7 @@ public class AnalyticsDbContext : DbContext
         modelBuilder.Entity<OrderAnalyticsEntry>(e =>
         {
             e.HasKey(x => x.Id);
+            e.HasIndex(x => x.OrderId).IsUnique();
             e.HasIndex(x => x.CustomerId);
             e.HasIndex(x => new { x.CustomerId, x.Year });
         });
